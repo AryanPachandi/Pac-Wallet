@@ -1,12 +1,15 @@
 const mongoose = require("mongoose");
-mongoose.connect("mongodb+srv://pachandiaryan:Aryan1515@aryanpachandi.bew7r.mongodb.net/paytm");
+const dotenv = require("dotenv");
+dotenv.config();
+mongoose.connect(process.env.MONGODB_URL);
 
 const UserSchema =new mongoose.Schema({
   fullname  : {type : String , required :true},
   username  : {type : String , required:true },
   password  : {type : String , required:true },
-  upiId     : {type : String  ,required:true},
-  password  : {type : String , required:true , unique:true}
+  PacId     : {type : String  ,required:true},
+  password  : {type : String , required:true , unique:true},
+  phoneNo   : {type : Number , required:true , unique:true}
 })
 
 const User = mongoose.model('User' , UserSchema);

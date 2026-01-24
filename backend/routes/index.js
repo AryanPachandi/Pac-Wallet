@@ -23,10 +23,10 @@ const registerSchema = z.object({
   fullname: z.string().min(1),
   username: z.string().min(4),
   password: z.string().min(6),
-  upiId: z.string().min(10),
+  phoneNo: z.number().min(10),
 });
 const loginSchema = z.object({
-  username: z.string().min(4),
+  phoneNo: z.number().min(10),
   password: z.string().min(6),
 });
 
@@ -50,23 +50,22 @@ const validateUser = (schema) =>
 
 routerUser.post("/register", validateUser(registerSchema), async (req, res) => {
 
-  const { fullname, username, password, upiId } = req.body;
+  const { fullname, username, password ,phoneNo} = req.body;
 
-  console.log(fullname , username , password , upiId);
+
   try {
 
     const existingUser = await User.findOne({username});
-    console.log(existingUser);
-    console.log(fullname , username , password , upiId);
+
     if (existingUser) {
       return res.status(400).json({ message: `User ${username} already exists` });
     }
   }catch (error) {
   if (error.code === 11000) {
-      console.error("REGISTER ERROR FULL:", error);
-  console.error("REGISTER ERROR MESSAGE:", error.message);
-  console.error("REGISTER ERROR CODE:", error.code);
-  console.error("REGISTER ERROR KEYVALUE:", error.keyValue);
+  //     console.error("REGISTER ERROR FULL:", error);
+  // console.error("REGISTER ERROR MESSAGE:", error.message);
+  // console.error("REGISTER ERROR CODE:", error.code);
+  // console.error("REGISTER ERROR KEYVALUE:", error.keyValue);
 
     const field = Object.keys(error.keyValue)[0];
     return res.status(400).json({
@@ -80,29 +79,31 @@ routerUser.post("/register", validateUser(registerSchema), async (req, res) => {
 }
 
     try {
-    const existingUpi = await User.findOne({ upiId});
-    if (existingUpi) {
-      return res.status(400).json({ message: `upiId ${upiId} already exists` });
+    const existingPhoneNO = await User.findOne({ phoneNo });
+    if (existingPhoneNO) {
+      return res.status(400).json({ message: `Phone NO ${phoneNo} already exists` });
     }
   } catch (error) {
-    return res.status(500).json({ message: "Error in registering user problem while finding existing upiId" });
+    return res.status(500).json({ message: "Error in registering user problem while finding existing Phone NO" });
   }
 
 
 try {
   const hashedPassword = await bcrypt.hash(password, 10);
+  const PacId  =phoneNo+"@pacwallet.com";
   const user = await User.create({
     fullname,
     username,
     password: hashedPassword,
-    upiId,
+    PacId,
+    phoneNo,
   });
 return res.status(201).json({
   message: "User created successfully",
   user: {
     fullname,
     username,
-    upiId,
+    PacId,
     id: user._id
   }
 });
