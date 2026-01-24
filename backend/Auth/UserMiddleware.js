@@ -15,3 +15,5 @@ try {
   res.status(401).json({ message: "Invalid token" });
 }
 }
+
+module.exports = {authMiddleware};

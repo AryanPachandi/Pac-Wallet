@@ -10,7 +10,7 @@ const dotenv = require("dotenv");
 
 //routers
 const routerUser = express.Router();
-// const routerUpdateUser = express.Router();
+
 
 const app = express();
 dotenv.config();
@@ -21,7 +21,7 @@ dotenv.config();
 
 const registerSchema = z.object({
   fullname: z.string().min(1),
-  username: z.string().min(4),
+  emailId: z.string().email(),
   password: z.string().min(6),
   phoneNo: z.number().min(10),
 });
@@ -50,22 +50,22 @@ const validateUser = (schema) =>
 
 routerUser.post("/register", validateUser(registerSchema), async (req, res) => {
 
-  const { fullname, username, password ,phoneNo} = req.body;
+  const { fullname, emailId, password ,phoneNo} = req.body;
 
 
   try {
 
-    const existingUser = await User.findOne({username});
+    const existingUser = await User.findOne({emailId});
 
     if (existingUser) {
-      return res.status(400).json({ message: `User ${username} already exists` });
+      return res.status(400).json({ message: `User ${emailId} already exists` });
     }
-  }catch (error) {
+} catch (error) {
   if (error.code === 11000) {
-  //     console.error("REGISTER ERROR FULL:", error);
-  // console.error("REGISTER ERROR MESSAGE:", error.message);
-  // console.error("REGISTER ERROR CODE:", error.code);
-  // console.error("REGISTER ERROR KEYVALUE:", error.keyValue);
+    //     console.error("REGISTER ERROR FULL:", error);
+    // console.error("REGISTER ERROR MESSAGE:", error.message);
+    // console.error("REGISTER ERROR CODE:", error.code);
+    // console.error("REGISTER ERROR KEYVALUE:", error.keyValue);
 
     const field = Object.keys(error.keyValue)[0];
     return res.status(400).json({
@@ -90,10 +90,10 @@ routerUser.post("/register", validateUser(registerSchema), async (req, res) => {
 
 try {
   const hashedPassword = await bcrypt.hash(password, 10);
-  const PacId  =phoneNo+"@pacwallet.com";
+  const PacId  =phoneNo+"@pacwallet"
   const user = await User.create({
     fullname,
-    username,
+    emailId,
     password: hashedPassword,
     PacId,
     phoneNo,
@@ -102,7 +102,7 @@ return res.status(201).json({
   message: "User created successfully",
   user: {
     fullname,
-    username,
+    emailId,
     PacId,
     id: user._id
   }
@@ -115,27 +115,23 @@ return res.status(201).json({
 
 routerUser.post("/login", validateUser(loginSchema), async (req, res) => {
 
-  const { username, password } = req.body;
-
-
+  const { phoneNo, password } = req.body;
 
   try {
     const user = await User.findOne({
-      username,
+      phoneNo});
 
-    });
-
-     if (!user) {
-      return res.status(404).json({ message: "User not found" });
+     if (!user || !await(bcrypt.compare(password, user.password))) {
+      return res.status(404).json({ message: "User not found || Invalid Credentials" });
     }
 
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
-      return res.status(401).json({ message: "Invalid Credentials" });
-    }
-
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET  ,{ expiresIn: "1h"});
-    console.log(token);
+    // const isMatch = await bcrypt.compare(password, user.password);
+    // if (!isMatch) {
+    //   return res.status(401).json({ message: "Invalid Credentials" });
+    // }
+      console.log("JWT_SECRET " , process.env.JWT_SECRET);
+    const token = jwt.sign({ id: user._id , phoneNumber: phoneNo}, process.env.JWT_SECRET  ,{ expiresIn: "1h"});
+    // console.log(token);
     res.status(200).json({ token : token });
   } catch (error) {
     res.status(500).json({ message: "Error in login" });
