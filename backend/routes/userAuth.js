@@ -1,10 +1,13 @@
-const express = require("express")
+    const express = require("express")
 
-const {User} = require("../models/User.js");
-const jwt = require("jsonwebtoken");
-const bcrypt = require("bcryptjs");
-const { z } = require("zod");
-const dotenv = require("dotenv");
+    const {User} = require("../models/User.js");
+    const jwt = require("jsonwebtoken");
+    const bcrypt = require("bcryptjs");
+    const { z } = require("zod");
+    const dotenv = require("dotenv");
+    const {CreateAccount} = require("../services/accGenerator.js");
+
+    const cookieParser = require("cookie-parser");
 
 
 
@@ -14,6 +17,7 @@ const routerUser = express.Router();
 
 const app = express();
 dotenv.config();
+app.use(cookieParser());
 
 
 
@@ -43,49 +47,9 @@ const validateUser = (schema) =>
   }
 
 
-// type User = z.infer<typeof UserSchema>
-
-
-
-
 routerUser.post("/register", validateUser(registerSchema), async (req, res) => {
 
   const { fullname, emailId, password ,phoneNo} = req.body;
-
-
-  try {
-
-    const existingUser = await User.findOne({emailId});
-
-    if (existingUser) {
-      return res.status(400).json({ message: `User ${emailId} already exists` });
-    }
-} catch (error) {
-  if (error.code === 11000) {
-    //     console.error("REGISTER ERROR FULL:", error);
-    // console.error("REGISTER ERROR MESSAGE:", error.message);
-    // console.error("REGISTER ERROR CODE:", error.code);
-    // console.error("REGISTER ERROR KEYVALUE:", error.keyValue);
-
-    const field = Object.keys(error.keyValue)[0];
-    return res.status(400).json({
-      message: `${field} already exists`
-    });
-  }
-
-  return res.status(500).json({
-    message: "Internal server error"
-  });
-}
-
-    try {
-    const existingPhoneNO = await User.findOne({ phoneNo });
-    if (existingPhoneNO) {
-      return res.status(400).json({ message: `Phone NO ${phoneNo} already exists` });
-    }
-  } catch (error) {
-    return res.status(500).json({ message: "Error in registering user problem while finding existing Phone NO" });
-  }
 
 
 try {
@@ -98,17 +62,30 @@ try {
     PacId,
     phoneNo,
   });
-return res.status(201).json({
-  message: "User created successfully",
-  user: {
+  const AccountNo = await CreateAccount(user._id);
+  return res.status(201).json({
+   message: "User created successfully",
+   AccountNo,
+    user: {
     fullname,
     emailId,
     PacId,
-    id: user._id
   }
 });
+
 } catch (error) {
-  res.status(500).json({ message: "Error in registering user" });
+      if (error.code ===11000){
+        const field = Object.keys(error.keyValue)[0]
+        return res.status(400).json({
+          message: `field ${field} already exits`
+        })
+      }
+
+    console.error("REGISTER ERROR:", error); // IMPORTANT
+
+    return res.status(500).json({
+      message: "Registration failed"
+    });
 }
 
 });
@@ -125,14 +102,18 @@ routerUser.post("/login", validateUser(loginSchema), async (req, res) => {
       return res.status(404).json({ message: "User not found || Invalid Credentials" });
     }
 
-    // const isMatch = await bcrypt.compare(password, user.password);
-    // if (!isMatch) {
-    //   return res.status(401).json({ message: "Invalid Credentials" });
-    // }
-      console.log("JWT_SECRET " , process.env.JWT_SECRET);
     const token = jwt.sign({ id: user._id , phoneNumber: phoneNo}, process.env.JWT_SECRET  ,{ expiresIn: "1h"});
-    // console.log(token);
-    res.status(200).json({ token : token });
+
+ res.cookie("accessToken", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production", // important
+      sameSite: "lax", // safer default
+      maxAge: 60 * 60 * 1000
+    });
+     console.log("ENV:", process.env.NODE_ENV);
+
+    return res.json({ message: "Login successful" });
+
   } catch (error) {
     res.status(500).json({ message: "Error in login" });
   }

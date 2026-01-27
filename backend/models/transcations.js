@@ -1,10 +1,11 @@
 const mongoose = require("mongoose")
 
 const TranscationSchema = new mongoose.Schema({
-  userId : {ref: "User"},
-  accountNo : {type : Number, required : true},
+  pacId : {type : String, required : true},
+  fromPacId : {type :String , required : true},
+  toPacId : {type :String , required : true},
   amount : {type : Number, required : true},
-  toWhom : {type : String , required : true},
+  Transcation : {type : String , required : true , enum :["debited" , "credited"]},
   date : {type : Date, required : true},
   status : {type : String, required : true},
 })

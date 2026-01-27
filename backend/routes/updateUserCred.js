@@ -78,7 +78,7 @@ UpdateUserRouter.put("/password",authMiddleware ,validateUser(updatepasswordSche
 UpdateUserRouter.post("/profile",authMiddleware , async (req, res) => {
   const userId = req.userId;
   try {
-    const user = await User.findById(userId).select("-password").select("-_id").select("-__v");
+    const user = await User.findById(userId).select("-password").select("-_id");
 
     res.status(200).json({ message: "User details", user });
   } catch (error) {

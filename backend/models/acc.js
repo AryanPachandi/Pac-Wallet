@@ -1,9 +1,16 @@
 const mongoose = require("mongoose")
 
 const AccountSchema = new mongoose.Schema({
-  userId : {ref: "User"},
-  accountNo : {type : Number, required : true},
-  balance : {type : Number, required : true},
+  userId : {
+    type : mongoose.Schema.Types.ObjectId,
+    ref: "User" ,
+    required : true,
+    index :true,
+  },
+
+
+  accountNo : {type : Number, required : true ,index : true},
+  balance : {type : Number, required : true , default : 0, min:0},
 })
 
 const Account = mongoose.model("Account", AccountSchema)
