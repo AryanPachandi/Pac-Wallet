@@ -13,7 +13,7 @@ app.use(express.json());
 app.use("/api/v1/", routerUser)
 app.use("/api/v1/updateUser" , UpdateUserRouter)
 app.use("/api/v1/deleteUser" , DeleteUserRouter)
-app.use("/api/v1/banking" , UserTransactionRouter)
+app.use("/api/v1/wallet" , UserTransactionRouter)
 
 app.listen(3000, () => {
   console.log("Server is running on port 3000");

@@ -20,7 +20,7 @@ const UserTransactionRouter = express.Router()
 dotenv.config();
 
 
-UserTransactionRouter.post("/", authMiddleware,async(req,res)=>{
+UserTransactionRouter.post("/balance", authMiddleware,async(req,res)=>{
   const password =req.body.password;
   const userId = req.userId
   try {

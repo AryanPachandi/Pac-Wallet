@@ -1,8 +1,4 @@
-
 const Account = require("../models/acc.js");
-
-
-
 
 async function  CreateAccount(userId){
   function generateAccountNo(){
@@ -13,7 +9,6 @@ async function  CreateAccount(userId){
   while(!createdAccount){
      try{
     AccountNo = generateAccountNo();
-
     await Account.create({
       userId : userId,
       accountNo : AccountNo,
