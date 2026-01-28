@@ -5,7 +5,7 @@ mongoose.connect(process.env.MONGODB_URL);
 
 const UserSchema =new mongoose.Schema({
   fullname  : {type : String , required :true},
-  emailId  : {type : String , required:true , unique:true},
+  emailId  : {type : String , required:true , unique:true , index : true},
   password  : {type : String , required:true },
   PacId     : {type : String  ,required:true ,unique:true},
   phoneNo   : {type : Number , required:true , unique:true}

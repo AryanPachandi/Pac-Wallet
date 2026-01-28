@@ -86,14 +86,14 @@ console.log("AMOUNT:", amount);
         message : "account not found try to login again"
       })
     }
-    if(!await Account.findOne({PacId :req.PacId}).session()){
+    if(!await Account.findOne({PacId :req.PacId}).session(session)){
       await session.abortTransaction()
       return res.status(401).json({
         message : "account not found try to login again"
       })
     }
     const AccountBalance = await Account.findOne({PacId :req.PacId}).session(session);
-    if(AccountBalance < amount){
+    if(AccountBalance.balance < amount){
        await session.abortTransaction()
       return res.status(401).json({
         message : "Insufficent balance"
@@ -107,15 +107,41 @@ console.log("AMOUNT:", amount);
       })
     }
 
+
     await Account.updateOne({PacId :req.PacId},{$inc :{balance : -amount}}).session(session) //from acc
     await Account.updateOne({PacId: toPacId} , {$inc :{balance : amount}}).session(session) // to acc
 
+    await Transcation.create([
+      {
+      userId : req.userId,
+      fromPacId : req.PacId,
+      toPacId : toPacId,
+      amount : amount,
+      Transcation : "debited",
+      date : new Date(),
+      status : "completed"
+    },
+
+    {
+       userId : ToPacIdAccount.userId,
+      fromPacId : req.PacId,
+      toPacId : toPacId,
+      amount : amount,
+      Transcation : "credited",
+      date : new Date(),
+      status : "completed"
+
+    }
+    ],{session});
+
     await session.commitTransaction()
+    session.endSession()
     res.status(200).json({
       message : "amount transfered successfully"
     })
 
   } catch (error) {
+    await session.abortTransaction();
      console.error("TRANSACTION ERROR 👉", error);
   res.status(500).json({ error: error.message });
   }
