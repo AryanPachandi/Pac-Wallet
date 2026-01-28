@@ -8,7 +8,7 @@ const AccountSchema = new mongoose.Schema({
     index :true,
   },
 
-
+  PacId      :{type : String, required : true ,index : true },
   accountNo : {type : Number, required : true ,index : true},
   balance : {type : Number, required : true , default : 0, min:0},
 })

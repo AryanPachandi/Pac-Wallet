@@ -62,7 +62,7 @@ try {
     PacId,
     phoneNo,
   });
-  const AccountNo = await CreateAccount(user._id);
+  const AccountNo = await CreateAccount(user._id , PacId);
   return res.status(201).json({
    message: "User created successfully",
    AccountNo,

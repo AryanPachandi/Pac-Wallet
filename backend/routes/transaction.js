@@ -11,7 +11,11 @@ const { authMiddleware } = require("../Auth/UserMiddleware.js");
 const { json } = require("body-parser");
 const transactionMiddleware = require("../Auth/transactionMiddleware.js")
 
-const Account = require("../models/acc.js")
+
+const Transcation =require("../models/transcations.js")
+
+const Account = require("../models/acc.js");
+const { default: mongoose } = require("mongoose");
 
 const UserTransactionRouter = express.Router()
 
@@ -20,7 +24,7 @@ const UserTransactionRouter = express.Router()
 dotenv.config();
 
 
-UserTransactionRouter.post("/balance", authMiddleware,async(req,res)=>{
+UserTransactionRouter.post("/", authMiddleware,async(req,res)=>{
   const password =req.body.password;
   const userId = req.userId
   try {
@@ -67,26 +71,58 @@ UserTransactionRouter.get("/acc", transactionMiddleware,async(req,res)=>{
 })
 
 
+UserTransactionRouter.post("/transfer-money" ,transactionMiddleware ,async(req ,res)=>{
+  const session = await mongoose.startSession();
+   session.startTransaction();
+
+  const {toPacId , amount} = req.body;
+  console.log("FROM:", req.PacId);
+console.log("TO:", toPacId);
+console.log("AMOUNT:", amount);
+  try {
+    if(!await User.findOne({PacId:req.PacId}).session(session)){
+      await session.abortTransaction()
+      return res.status(401).json({
+        message : "account not found try to login again"
+      })
+    }
+    if(!await Account.findOne({PacId :req.PacId}).session()){
+      await session.abortTransaction()
+      return res.status(401).json({
+        message : "account not found try to login again"
+      })
+    }
+    const AccountBalance = await Account.findOne({PacId :req.PacId}).session(session);
+    if(AccountBalance < amount){
+       await session.abortTransaction()
+      return res.status(401).json({
+        message : "Insufficent balance"
+      })
+    }
+    const ToPacIdAccount  = await Account.findOne({PacId : toPacId}).session(session);
+    if(!ToPacIdAccount){
+         await session.abortTransaction()
+      return res.status(401).json({
+        message : "Account not found to whom you are sending to"
+      })
+    }
+
+    await Account.updateOne({PacId :req.PacId},{$inc :{balance : -amount}}).session(session) //from acc
+    await Account.updateOne({PacId: toPacId} , {$inc :{balance : amount}}).session(session) // to acc
+
+    await session.commitTransaction()
+    res.status(200).json({
+      message : "amount transfered successfully"
+    })
+
+  } catch (error) {
+     console.error("TRANSACTION ERROR 👉", error);
+  res.status(500).json({ error: error.message });
+  }
+
+})
 
 
-// UserTransactionRouter.post("/send-money" , async(req,res)=>{
-//   const password = req.body.password;
-//   const userId = req.userId
-//   const toPacId = req.body.toPacId;
-//   const amount  = req.body
-
-//   const user =await  User.findById({userId})
-
-//   if(!await(bcrypt.compare(password , user.password)))
-//   {
-//     return res.status(401).json({
-//       message:"in-correct password"
-//     })
-//   }
-
-
-
-// })
 
 
 module.exports = UserTransactionRouter
